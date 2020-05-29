@@ -70,106 +70,106 @@ GRADE_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=ABCDEF+-'  # PSM 7: 
 # Lookup dictionaries
 PROJ_LOOKUP = {
     "EARLY1STROUNDER": "1E",
-    "MID1STROUNDER": "1M",
-    "LATE1STROUNDER": "1L",
+    "MID1STROUNDER":   "1M",
+    "LATE1STROUNDER":  "1L",
     "EARLY2NDROUNDER": "2E",
-    "MID2NDROUNDER": "2M",
-    "LATE2NDROUNDER": "2L",
+    "MID2NDROUNDER":   "2M",
+    "LATE2NDROUNDER":  "2L",
     "EARLY3RDROUNDER": "3E",
-    "MID3RDROUNDER": "3M",
-    "LATE3RDROUNDER": "3L",
+    "MID3RDROUNDER":   "3M",
+    "LATE3RDROUNDER":  "3L",
     "EARLY4THROUNDER": "4E",
-    "MID4THROUNDER": "4M",
-    "LATE4THROUNDER": "4L",
+    "MID4THROUNDER":   "4M",
+    "LATE4THROUNDER":  "4L",
     "EARLY5THROUNDER": "5E",
-    "MID5THROUNDER": "5M",
-    "LATE5THROUNDER": "5L",
+    "MID5THROUNDER":   "5M",
+    "LATE5THROUNDER":  "5L",
     "EARLY6THROUNDER": "6E",
-    "MID6THROUNDER": "6M",
-    "LATE6THROUNDER": "6L",
+    "MID6THROUNDER":   "6M",
+    "LATE6THROUNDER":  "6L",
     "EARLY7THROUNDER": "7E",
-    "MID7THROUNDER": "7M",
-    "LATE7THROUNDER": "7L",
-    "UNDRAFTED": "UD",
+    "MID7THROUNDER":   "7M",
+    "LATE7THROUNDER":  "7L",
+    "UNDRAFTED":       "UD",
 }
 
 ARCH_LOOKUP = {
-    "Man To Man": "Man-to-Man",
-    "Physical": "Red Zone Threat",
+    "Man To Man":   "Man-to-Man",
+    "Physical":     "Red Zone Threat",
     "Route Runner": "Possession",
 }
 
 SKILL_LOOKUP = {
     # Physical
-    "ACCELERATION": "ACC",
-    "AGILITY": "AGI",
-    "JUMP": "JMP",
-    "SPEED": "SPD",
-    "STRENGTH": "STR",
+    "ACCELERATION":       "ACC",
+    "AGILITY":            "AGI",
+    "JUMP":               "JMP",
+    "SPEED":              "SPD",
+    "STRENGTH":           "STR",
 
     # Mental
-    "AWARENESS": "AWR",
-    "PLAYRECOGNITION": "PRC",
+    "AWARENESS":          "AWR",
+    "PLAYRECOGNITION":    "PRC",
 
     # Kicking
-    "KICKACCURARY": "KAC",
-    "KICKPOWER": "KPW",
+    "KICKACCURARY":       "KAC",
+    "KICKPOWER":          "KPW",
 
     # Carrying
-    "BCVISION": "BCV",
-    "BREAKTACKLE": "BTK",
-    "CARRYING": "CAR",
-    "ELUSIVENESS": "ELU",
-    "JUKEMOVE": "JKM",
-    "STIFFARM": "SFA",
-    "SPINMOVE": "SPM",
-    "TRUCKING": "TRK",
+    "BCVISION":           "BCV",
+    "BREAKTACKLE":        "BTK",
+    "CARRYING":           "CAR",
+    "ELUSIVENESS":        "ELU",
+    "JUKEMOVE":           "JKM",
+    "STIFFARM":           "SFA",
+    "SPINMOVE":           "SPM",
+    "TRUCKING":           "TRK",
 
     # Receiving
-    "CTHINTRAFFIC": "CIT",
-    "CATCHING": "CTH",
-    "DEEPROUTE": "DRT",
-    "MEDROUTE": "MRT",
-    "SHORTROUTE": "SRT",
-    "RELEASE": "RLS",
-    "SPECCATCH": "SPC",
+    "CTHINTRAFFIC":       "CIT",
+    "CATCHING":           "CTH",
+    "DEEPROUTE":          "DRT",
+    "MEDROUTE":           "MRT",
+    "SHORTROUTE":         "SRT",
+    "RELEASE":            "RLS",
+    "SPECCATCH":          "SPC",
 
     # Throwing
-    "BREAKSACK": "BSK",
-    "THROWACCSHORT": "SAC",
-    "THROWACCMID": "MAC",
-    "THROWACCDEEP": "DAC",
-    "PLAYACTION": "PAC",
-    "THROWPOWER": "THP",
-    "THROWONTHERUN": "TOR",
+    "BREAKSACK":          "BSK",
+    "THROWACCSHORT":      "SAC",
+    "THROWACCMID":        "MAC",
+    "THROWACCDEEP":       "DAC",
+    "PLAYACTION":         "PAC",
+    "THROWPOWER":         "THP",
+    "THROWONTHERUN":      "TOR",
     "THROWUNDERPRESSURE": "TUP",
 
     # Blocking
-    "IMPACTBLOCK": "IBK",
-    "LEADBLOCK": "LBK",
-    "PASSBLOCK": "PBK",
-    "PASSBLOCKFINESSE": "PBF",
-    "PASSBLOCKPOWER": "PBP",
-    "RUNBLOCK": "RBK",
-    "RUNBLOCKFINESSE": "RBF",
-    "RUNBLOCKPOWER": "RBP",
+    "IMPACTBLOCK":        "IBK",
+    "LEADBLOCK":          "LBK",
+    "PASSBLOCK":          "PBK",
+    "PASSBLOCKFINESSE":   "PBF",
+    "PASSBLOCKPOWER":     "PBP",
+    "RUNBLOCK":           "RBK",
+    "RUNBLOCKFINESSE":    "RBF",
+    "RUNBLOCKPOWER":      "RBP",
 
     # Defensive
-    "BLOCKSHEDDING": "BSH",
-    "FMOVES": "FMV",
-    "M.COVERAGE": "MCV",
-    "PWRMOVES": "PMV",
-    "HITPOWER": "POW",
-    "PRESS": "PRS",
-    "PURSUIT": "PUR",
-    "TACKLE": "TAK",
-    "Z.COVERAGE": "ZCV",
+    "BLOCKSHEDDING":      "BSH",
+    "FMOVES":             "FMV",
+    "M.COVERAGE":         "MCV",
+    "PWRMOVES":           "PMV",
+    "HITPOWER":           "POW",
+    "PRESS":              "PRS",
+    "PURSUIT":            "PUR",
+    "TACKLE":             "TAK",
+    "Z.COVERAGE":         "ZCV",
 
     # Misc
-    "INJURY": "INJ",
-    "KICKRETURN": "KRT",
-    "STAMINA": "STA",
-    "TOUGHNESS": "TGH",
+    "INJURY":             "INJ",
+    "KICKRETURN":         "KRT",
+    "STAMINA":            "STA",
+    "TOUGHNESS":          "TGH",
 }
 
 # RegEx patterns for matching OCR'd text
@@ -268,7 +268,7 @@ def extract_player_name(image):
 def extract_player_position(image):
     # Get area of picture which contains the position
     pos_crop = image[POSITION_Y_START:POSITION_Y_START + POSITION_Y_SIZE,
-                     POSITION_X_START:POSITION_X_START + POSITION_X_SIZE]
+               POSITION_X_START:POSITION_X_START + POSITION_X_SIZE]
 
     # OCR the position
     position = pytesseract.image_to_string(pos_crop, config=POSITION_CONFIG)
