@@ -56,6 +56,19 @@ GRADE_Y_START = 765
 GRADE_X_SIZE = 85
 GRADE_Y_SIZE = 65
 
+COMB_X_START = 1400
+COMB_DASH_START = 385
+COMB_VERT_START = 425
+COMB_CONE_START = 510
+COMB_SHUTTLE_START = 550
+COMB_BENCH_START = 590
+COMB_DASH_SIZE = 55
+COMB_VERT_SIZE = 70
+COMB_CONE_SIZE = 55
+COMB_SHUTTLE_SIZE = 55
+COMB_BENCH_SIZE = 35
+COMB_Y_SIZE = 30
+
 # Tesseract configs
 POSITION_CONFIG = r'--oem 3 --psm 8 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ'  # PSM 8: Single word, only letters
 NAME_CONFIG = r'--oem 3 --psm 4'  # PSM 4: Single column of text of variable sizes
@@ -66,6 +79,9 @@ PROJ_CONFIG = r'--oem 3 --psm 4 -c tessedit_char_whitelist="ABCDEFGHIJKLMNOPQRST
 ARCH_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz "'  # PSM 7: Single line, only numbers, only letters and space
 SKILL_CONFIG = r'--oem 3 --psm 4 -c tessedit_char_whitelist="ABCDEFGHIJKLMNOPQRSTUVWXYZ. "'  # PSM 4: Single column of text of variable sizes, only letters and space
 GRADE_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=ABCDEF+-'  # PSM 7: Single line, only letters A-F, +, -
+COMB_TIME_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789.'  # PSM 7: Single line, only numbers and .
+COMB_VERT_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789.\"'  # PSM 7: Single line, only numbers, . and "
+COMB_BENCH_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789'  # PSM 7: Single line, only numbers
 
 # Lookup dictionaries
 PROJ_LOOKUP = {
@@ -370,9 +386,40 @@ def extract_player_skills(image):
     }
 
 
+def extract_player_combine_stats(image):
+    # Get areas of the image which contain the combine stats
+    dash_crop = image[COMB_DASH_START:COMB_DASH_START + COMB_Y_SIZE, COMB_X_START:COMB_X_START + COMB_DASH_SIZE]
+    vertical_crop = image[COMB_VERT_START:COMB_VERT_START + COMB_Y_SIZE, COMB_X_START:COMB_X_START + COMB_VERT_SIZE]
+    cone_crop = image[COMB_CONE_START:COMB_CONE_START + COMB_Y_SIZE, COMB_X_START:COMB_X_START + COMB_CONE_SIZE]
+    shuttle_crop = image[COMB_SHUTTLE_START:COMB_SHUTTLE_START + COMB_Y_SIZE, COMB_X_START:COMB_X_START + COMB_SHUTTLE_SIZE]
+    bench_crop = image[COMB_BENCH_START:COMB_BENCH_START + COMB_Y_SIZE, COMB_X_START:COMB_X_START + COMB_BENCH_SIZE]
+
+    # OCR the stats
+    dash = pytesseract.image_to_string(dash_crop, config=COMB_TIME_CONFIG)
+    vertical = pytesseract.image_to_string(vertical_crop, config=COMB_VERT_CONFIG)
+    cone = pytesseract.image_to_string(cone_crop, config=COMB_TIME_CONFIG)
+    shuttle = pytesseract.image_to_string(shuttle_crop, config=COMB_TIME_CONFIG)
+    bench = pytesseract.image_to_string(bench_crop, config=COMB_BENCH_CONFIG)
+
+    # Clean up results a bit
+    dash = dash.strip()
+    vertical = vertical.replace('"', '').strip()
+    cone = cone.strip()
+    shuttle = shuttle.strip()
+    bench = bench.strip()
+
+    # Dash, cone and shuttle require a . as the 2nd character, vertical as the 3rd. Make sure it's there
+    dash = dash[0] + '.' + dash[1:] if dash[1] != '.' else dash
+    vertical = vertical[0:2] + '.' + vertical[2:] if vertical[2] != '.' else vertical
+    cone = cone[0] + '.' + cone[1:] if cone[1] != '.' else cone
+    shuttle = shuttle[0] + '.' + shuttle[1:] if shuttle[1] != '.' else shuttle
+
+    return dash, vertical, cone, shuttle, bench
+
+
 def main():
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-    image = cv2.imread('test.png')
+    image = cv2.imread('test3.png')
 
     # Preprocess the image
     dskw = deskew(image)
@@ -387,6 +434,7 @@ def main():
     extract_player_proj_round(thresh)
     extract_player_archetype(thresh)
     extract_player_skills(thresh)
+    extract_player_combine_stats(thresh)
 
 
 if __name__ == '__main__':
