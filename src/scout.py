@@ -26,11 +26,17 @@ WEIGHT_Y_START = 425
 WEIGHT_X_SIZE = 50
 WEIGHT_Y_SIZE = 30
 
+AGE_X_START = 895
+AGE_Y_START = 465
+AGE_X_SIZE = 35
+AGE_Y_SIZE = 35
+
 # Tesseract configs
 POSITION_CONFIG = r'--oem 3 --psm 8 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ'  # PSM 8: Single word, only letters
 NAME_CONFIG = r'--oem 3 --psm 4'  # PSM 4: Single column of text of variable sizes
 HEIGHT_CONFIG = r"--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789\'\""  # PSM 7: Single line, only numbers and '"
 WEIGHT_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789'  # PSM 7: Single line, only numbers
+AGE_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789'  # PSM 7: Single line, only numbers
 
 
 def get_grayscale(image):
@@ -145,6 +151,15 @@ def extract_player_weight(image):
     return weight.strip()
 
 
+def extract_player_age(image):
+    # Get area of picture which contains the age
+    age_crop = image[AGE_Y_START:AGE_Y_START + AGE_Y_SIZE, AGE_X_START:AGE_X_START + AGE_X_SIZE]
+
+    # OCR the age
+    age = pytesseract.image_to_string(age_crop, config=AGE_CONFIG)
+    return age.strip()
+
+
 def main():
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
     image = cv2.imread('test.png')
@@ -158,6 +173,7 @@ def main():
     extract_player_name(thresh)
     extract_player_height(thresh)
     extract_player_weight(thresh)
+    extract_player_age(thresh)
 
 
 if __name__ == '__main__':
