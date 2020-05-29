@@ -5,11 +5,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytesseract
 
+# Coordinates where certain areas are located in the picture
+NAME_X_START = 535
+NAME_Y_START = 145
+NAME_X_SIZE = 620
+NAME_Y_SIZE = 137
 
-NAME_X_START = 539
-NAME_Y_START = 150
-NAME_X_SIZE = 610
-NAME_Y_SIZE = 127
+# Tesseract configs
+NAME_CONFIG = r'--oem 3 --psm 4'  # PSM 4: Single column of text of variable sizes
 
 
 def get_grayscale(image):
@@ -87,9 +90,18 @@ def show_images(images, cols=1, titles=None):
 
 
 def extract_player_name(image):
-    name_crop = image[NAME_Y_START:NAME_Y_START+NAME_Y_SIZE, NAME_X_START:NAME_X_START+NAME_X_SIZE]
-    cv2.imshow("name", name_crop)
-    cv2.waitKey(0)
+    # Get area of picture which contains the player name
+    name_crop = image[NAME_Y_START:NAME_Y_START + NAME_Y_SIZE, NAME_X_START:NAME_X_START + NAME_X_SIZE]
+
+    # Preprocess the image
+    dskw = deskew(name_crop)
+    gray = get_grayscale(dskw)
+    thresh = thresholding(gray)
+
+    # OCR the player name. Will contain \n so replace it with space
+    player_name = pytesseract.image_to_string(thresh, config=NAME_CONFIG)
+    player_name = player_name.replace('\n', ' ')
+    return player_name.strip()
 
 
 def main():
@@ -104,6 +116,8 @@ def main():
     erd = erode(gray)
     opn = opening(gray)
     cny = canny(gray)
+
+    extract_player_name(image)
 
     custom_config = r'--oem 3 --psm 6'
     dskw_str = pytesseract.image_to_string(dskw, config=custom_config)
