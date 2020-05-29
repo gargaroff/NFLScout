@@ -16,9 +16,15 @@ NAME_Y_START = 145
 NAME_X_SIZE = 620
 NAME_Y_SIZE = 137
 
+HEIGHT_X_START = 900
+HEIGHT_Y_START = 380
+HEIGHT_X_SIZE = 50
+HEIGHT_Y_SIZE = 30
+
 # Tesseract configs
 POSITION_CONFIG = r'--oem 3 --psm 8 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ'  # PSM 8: Single word, only letters
 NAME_CONFIG = r'--oem 3 --psm 4'  # PSM 4: Single column of text of variable sizes
+HEIGHT_CONFIG = r"--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789\'\""  # PSM 8: Single word, only numbers and '
 
 
 def get_grayscale(image):
@@ -115,6 +121,15 @@ def extract_player_position(image):
     return position.strip()
 
 
+def extract_player_height(image):
+    # Get area of picture which contains the height
+    height_crop = image[HEIGHT_Y_START:HEIGHT_Y_START + HEIGHT_Y_SIZE, HEIGHT_X_START:HEIGHT_X_START + HEIGHT_X_SIZE]
+
+    # OCR the height
+    height = pytesseract.image_to_string(height_crop, config=HEIGHT_CONFIG)
+    return height.strip()
+
+
 def main():
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
     image = cv2.imread('test.png')
@@ -126,6 +141,7 @@ def main():
 
     extract_player_position(thresh)
     extract_player_name(thresh)
+    extract_player_height(thresh)
 
 
 if __name__ == '__main__':
