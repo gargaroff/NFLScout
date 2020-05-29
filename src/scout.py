@@ -297,7 +297,7 @@ def extract_player_height(image):
 
     # OCR the height
     height = pytesseract.image_to_string(height_crop, config=HEIGHT_CONFIG)
-    return height.strip()
+    return height.replace('"', '').strip()
 
 
 def extract_player_weight(image):
