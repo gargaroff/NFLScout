@@ -48,8 +48,8 @@ NAME_CONFIG = r'--oem 3 --psm 4'  # PSM 4: Single column of text of variable siz
 HEIGHT_CONFIG = r"--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789\'\""  # PSM 7: Single line, only numbers and '"
 WEIGHT_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789'  # PSM 7: Single line, only numbers
 AGE_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789'  # PSM 7: Single line, only numbers
-PROJ_CONFIG = r'--oem 3 --psm 4 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 '  # PSM 5: Single uniform block of vertically aligned text, only letters, numbers and space
-ARCH_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz '  # PSM 7: Single line, only numbers, only letters and space
+PROJ_CONFIG = r'--oem 3 --psm 4 -c tessedit_char_whitelist="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "'  # PSM 5: Single uniform block of vertically aligned text, only letters, numbers and space
+ARCH_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz "'  # PSM 7: Single line, only numbers, only letters and space
 
 # Lookup dictionaries
 PROJ_LOOKUP = {
