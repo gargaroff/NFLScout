@@ -6,12 +6,18 @@ import numpy as np
 import pytesseract
 
 # Coordinates where certain areas are located in the picture
+POSITION_X_START = 530
+POSITION_Y_START = 110
+POSITION_X_SIZE = 110
+POSITION_Y_SIZE = 35
+
 NAME_X_START = 535
 NAME_Y_START = 145
 NAME_X_SIZE = 620
 NAME_Y_SIZE = 137
 
 # Tesseract configs
+POSITION_CONFIG = r'--oem 3 --psm 8 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ'  # PSM 8: Single word, only letters
 NAME_CONFIG = r'--oem 3 --psm 4'  # PSM 4: Single column of text of variable sizes
 
 
@@ -104,34 +110,27 @@ def extract_player_name(image):
     return player_name.strip()
 
 
-def main():
-    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+def extract_player_position(image):
+    # Get area of picture which contains the position
+    pos_crop = image[POSITION_Y_START:POSITION_Y_START + POSITION_Y_SIZE,
+                      POSITION_X_START:POSITION_X_START + POSITION_X_SIZE]
 
-    image = cv2.imread('test.png')
-    dskw = deskew(image)
+    # Preprocess the image
+    dskw = deskew(pos_crop)
     gray = get_grayscale(dskw)
     thresh = thresholding(gray)
-    rnoise = remove_noise(gray)
-    dlt = dilate(gray)
-    erd = erode(gray)
-    opn = opening(gray)
-    cny = canny(gray)
 
+    # OCR the position
+    position = pytesseract.image_to_string(thresh, config=POSITION_CONFIG)
+    return position.strip()
+
+
+def main():
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+    image = cv2.imread('test.png')
+
+    extract_player_position(image)
     extract_player_name(image)
-
-    custom_config = r'--oem 3 --psm 6'
-    dskw_str = pytesseract.image_to_string(dskw, config=custom_config)
-    gray_str = pytesseract.image_to_string(gray, config=custom_config)
-    thresh_str = pytesseract.image_to_string(thresh, config=custom_config)
-    rnoise_str = pytesseract.image_to_string(rnoise, config=custom_config)
-    dlt_str = pytesseract.image_to_string(dlt, config=custom_config)
-    erd_str = pytesseract.image_to_string(erd, config=custom_config)
-    opn_str = pytesseract.image_to_string(opn, config=custom_config)
-    cny_str = pytesseract.image_to_string(cny, config=custom_config)
-
-    # For player name: deskew, thresh, image
-    show_images([gray, rnoise, dlt, erd, thresh, dskw, opn, cny], 3,
-                ["gray", "rnoise", "dilate", "erode", "thresh", "deskew", "opening", "canny"])
 
 
 if __name__ == '__main__':
