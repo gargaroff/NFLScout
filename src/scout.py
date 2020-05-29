@@ -425,6 +425,11 @@ def extract_player_combine_stats(image):
     shuttle = shuttle.strip()
     bench = bench.strip()
 
+    # Return empty string if no combine stats are available
+    if dash == '':
+        assert dash == vertical and dash == cone and dash == shuttle and dash == bench
+        return dash, vertical, cone, shuttle, bench
+
     # Dash, cone and shuttle require a . as the 2nd character, vertical as the 3rd. Make sure it's there
     dash = dash[0] + '.' + dash[1:] if dash[1] != '.' else dash
     vertical = vertical[0:2] + '.' + vertical[2:] if vertical[2] != '.' else vertical
@@ -436,7 +441,7 @@ def extract_player_combine_stats(image):
 
 def main():
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-    image = cv2.imread('test3.png')
+    image = cv2.imread('test.png')
 
     # Preprocess the image
     dskw = deskew(image)
