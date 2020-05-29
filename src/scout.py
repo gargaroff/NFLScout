@@ -42,6 +42,20 @@ ARCH_Y_START = 545
 ARCH_X_SIZE = 200
 ARCH_Y_SIZE = 40
 
+SKILL1_X_START = 745
+SKILL2_X_START = 960
+SKILL3_X_START = 1175
+SKILL_Y_START = 855
+SKILL_X_SIZE = 210
+SKILL_Y_SIZE = 70
+
+GRADE1_X_START = 810
+GRADE2_X_START = 1025
+GRADE3_X_START = 1235
+GRADE_Y_START = 765
+GRADE_X_SIZE = 85
+GRADE_Y_SIZE = 65
+
 # Tesseract configs
 POSITION_CONFIG = r'--oem 3 --psm 8 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ'  # PSM 8: Single word, only letters
 NAME_CONFIG = r'--oem 3 --psm 4'  # PSM 4: Single column of text of variable sizes
@@ -50,6 +64,8 @@ WEIGHT_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789'  # PSM 
 AGE_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789'  # PSM 7: Single line, only numbers
 PROJ_CONFIG = r'--oem 3 --psm 4 -c tessedit_char_whitelist="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "'  # PSM 5: Single uniform block of vertically aligned text, only letters, numbers and space
 ARCH_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz "'  # PSM 7: Single line, only numbers, only letters and space
+SKILL_CONFIG = r'--oem 3 --psm 4 -c tessedit_char_whitelist="ABCDEFGHIJKLMNOPQRSTUVWXYZ. "'  # PSM 4: Single column of text of variable sizes, only letters and space
+GRADE_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=ABCDEF+-'  # PSM 7: Single line, only letters A-F, +, -
 
 # Lookup dictionaries
 PROJ_LOOKUP = {
@@ -83,6 +99,79 @@ ARCH_LOOKUP = {
     "Route Runner": "Possession",
 }
 
+SKILL_LOOKUP = {
+    # Physical
+    "ACCELERATION": "ACC",
+    "AGILITY": "AGI",
+    "JUMP": "JMP",
+    "SPEED": "SPD",
+    "STRENGTH": "STR",
+
+    # Mental
+    "AWARENESS": "AWR",
+    "PLAYRECOGNITION": "PRC",
+
+    # Kicking
+    "KICKACCURARY": "KAC",
+    "KICKPOWER": "KPW",
+
+    # Carrying
+    "BCVISION": "BCV",
+    "BREAKTACKLE": "BTK",
+    "CARRYING": "CAR",
+    "ELUSIVENESS": "ELU",
+    "JUKEMOVE": "JKM",
+    "STIFFARM": "SFA",
+    "SPINMOVE": "SPM",
+    "TRUCKING": "TRK",
+
+    # Receiving
+    "CTHINTRAFFIC": "CIT",
+    "CATCHING": "CTH",
+    "DEEPROUTE": "DRT",
+    "MEDROUTE": "MRT",
+    "SHORTROUTE": "SRT",
+    "RELEASE": "RLS",
+    "SPECCATCH": "SPC",
+
+    # Throwing
+    "BREAKSACK": "BSK",
+    "THROWACCSHORT": "SAC",
+    "THROWACCMID": "MAC",
+    "THROWACCDEEP": "DAC",
+    "PLAYACTION": "PAC",
+    "THROWPOWER": "THP",
+    "THROWONTHERUN": "TOR",
+    "THROWUNDERPRESSURE": "TUP",
+
+    # Blocking
+    "IMPACTBLOCK": "IBK",
+    "LEADBLOCK": "LBK",
+    "PASSBLOCK": "PBK",
+    "PASSBLOCKFINESSE": "PBF",
+    "PASSBLOCKPOWER": "PBP",
+    "RUNBLOCK": "RBK",
+    "RUNBLOCKFINESSE": "RBF",
+    "RUNBLOCKPOWER": "RBP",
+
+    # Defensive
+    "BLOCKSHEDDING": "BSH",
+    "FMOVES": "FMV",
+    "M.COVERAGE": "MCV",
+    "PWRMOVES": "PMV",
+    "HITPOWER": "POW",
+    "PRESS": "PRS",
+    "PURSUIT": "PUR",
+    "TACKLE": "TAK",
+    "Z.COVERAGE": "ZCV",
+
+    # Misc
+    "INJURY": "INJ",
+    "KICKRETURN": "KRT",
+    "STAMINA": "STA",
+    "TOUGHNESS": "TGH",
+}
+
 # RegEx patterns for matching OCR'd text
 ARCH_PATTERN = r'^(Physical|Man To Man|Field General|Scrambler|Strong Arm|West Coast|Agile|Pass Protector|Power|Run Stopper|Speed Rusher|Pass Coverage|Accurate|Elusive|Receiving|Slot|Zone|Blocking|Utility|Hybrid|Run Support|Deep Threat|Route Runner)'
 
@@ -98,6 +187,11 @@ def remove_noise(image):
 def thresholding(image):
     # Threshold the image, setting all foreground pixels to 255 and all background pixels to 0
     return cv2.threshold(image, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+
+
+def invert(image):
+    # Invert the colors of the image, making black white and vice versa
+    return cv2.bitwise_not(image)
 
 
 def dilate(image):
@@ -234,6 +328,48 @@ def extract_player_archetype(image):
     return ARCH_LOOKUP.get(arch, arch)
 
 
+def extract_player_skills(image):
+    # Get area of picture which contains the skills and the grades
+    skill1_crop = image[SKILL_Y_START:SKILL_Y_START + SKILL_Y_SIZE, SKILL1_X_START:SKILL1_X_START + SKILL_X_SIZE]
+    skill2_crop = image[SKILL_Y_START:SKILL_Y_START + SKILL_Y_SIZE, SKILL2_X_START:SKILL2_X_START + SKILL_X_SIZE]
+    skill3_crop = image[SKILL_Y_START:SKILL_Y_START + SKILL_Y_SIZE, SKILL3_X_START:SKILL3_X_START + SKILL_X_SIZE]
+
+    # Colors on the grade image are inverted. Invert it
+    inverted = invert(image)
+    grade1_crop = inverted[GRADE_Y_START:GRADE_Y_START + GRADE_Y_SIZE, GRADE1_X_START:GRADE1_X_START + GRADE_X_SIZE]
+    grade2_crop = inverted[GRADE_Y_START:GRADE_Y_START + GRADE_Y_SIZE, GRADE2_X_START:GRADE2_X_START + GRADE_X_SIZE]
+    grade3_crop = inverted[GRADE_Y_START:GRADE_Y_START + GRADE_Y_SIZE, GRADE3_X_START:GRADE3_X_START + GRADE_X_SIZE]
+
+    # OCR the skill names and grades
+    skill1 = pytesseract.image_to_string(skill1_crop, config=SKILL_CONFIG)
+    skill2 = pytesseract.image_to_string(skill2_crop, config=SKILL_CONFIG)
+    skill3 = pytesseract.image_to_string(skill3_crop, config=SKILL_CONFIG)
+
+    grade1 = pytesseract.image_to_string(grade1_crop, config=GRADE_CONFIG)
+    grade2 = pytesseract.image_to_string(grade2_crop, config=GRADE_CONFIG)
+    grade3 = pytesseract.image_to_string(grade3_crop, config=GRADE_CONFIG)
+
+    # Remove all whitespaces and newlines
+    skill1 = skill1.replace(' ', '').replace('\n', '')
+    skill2 = skill2.replace(' ', '').replace('\n', '')
+    skill3 = skill3.replace(' ', '').replace('\n', '')
+
+    grade1 = grade1.strip()
+    grade2 = grade2.strip()
+    grade3 = grade3.strip()
+
+    # Lookup skills in dictionary
+    skill1 = SKILL_LOOKUP[skill1.strip()]
+    skill2 = SKILL_LOOKUP[skill2.strip()]
+    skill3 = SKILL_LOOKUP[skill3.strip()]
+
+    return {
+        skill1: grade1,
+        skill2: grade2,
+        skill3: grade3,
+    }
+
+
 def main():
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
     image = cv2.imread('test.png')
@@ -250,6 +386,7 @@ def main():
     extract_player_age(thresh)
     extract_player_proj_round(thresh)
     extract_player_archetype(thresh)
+    extract_player_skills(thresh)
 
 
 if __name__ == '__main__':
