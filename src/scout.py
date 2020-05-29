@@ -69,13 +69,18 @@ COMB_SHUTTLE_SIZE = 55
 COMB_BENCH_SIZE = 35
 COMB_Y_SIZE = 30
 
+TALENT_X_START = 1435
+TALENT_Y_START = 860
+TALENT_X_SIZE = 150
+TALENT_Y_SIZE = 60
+
 # Tesseract configs
 POSITION_CONFIG = r'--oem 3 --psm 8 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ'  # PSM 8: Single word, only letters
 NAME_CONFIG = r'--oem 3 --psm 4'  # PSM 4: Single column of text of variable sizes
 HEIGHT_CONFIG = r"--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789\'\""  # PSM 7: Single line, only numbers and '"
 WEIGHT_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789'  # PSM 7: Single line, only numbers
 AGE_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789'  # PSM 7: Single line, only numbers
-PROJ_CONFIG = r'--oem 3 --psm 4 -c tessedit_char_whitelist="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "'  # PSM 5: Single uniform block of vertically aligned text, only letters, numbers and space
+PROJ_TALENT_CONFIG = r'--oem 3 --psm 4 -c tessedit_char_whitelist="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "'  # PSM 5: Single uniform block of vertically aligned text, only letters, numbers and space
 ARCH_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz "'  # PSM 7: Single line, only numbers, only letters and space
 SKILL_CONFIG = r'--oem 3 --psm 4 -c tessedit_char_whitelist="ABCDEFGHIJKLMNOPQRSTUVWXYZ. "'  # PSM 4: Single column of text of variable sizes, only letters and space
 GRADE_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=ABCDEF+-'  # PSM 7: Single line, only letters A-F, +, -
@@ -84,7 +89,7 @@ COMB_VERT_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789.\"'  
 COMB_BENCH_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789'  # PSM 7: Single line, only numbers
 
 # Lookup dictionaries
-PROJ_LOOKUP = {
+PROJ_TALENT_LOOKUP = {
     "EARLY1STROUNDER": "1E",
     "MID1STROUNDER":   "1M",
     "LATE1STROUNDER":  "1L",
@@ -323,11 +328,11 @@ def extract_player_proj_round(image):
     proj_crop = image[PROJ_Y_START:PROJ_Y_START + PROJ_Y_SIZE, PROJ_X_START:PROJ_X_START + PROJ_X_SIZE]
 
     # OCR the age
-    proj = pytesseract.image_to_string(proj_crop, config=PROJ_CONFIG)
+    proj = pytesseract.image_to_string(proj_crop, config=PROJ_TALENT_CONFIG)
 
     # Remove all whitespaces and newlines, then get value from lookup table
     proj = proj.replace(' ', '').replace('\n', '')
-    return PROJ_LOOKUP[proj]
+    return PROJ_TALENT_LOOKUP[proj]
 
 
 def extract_player_archetype(image):
@@ -386,6 +391,18 @@ def extract_player_skills(image):
     }
 
 
+def extract_player_talent_round(image):
+    # Get area of picture which contains the talent round
+    talent_crop = image[TALENT_Y_START:TALENT_Y_START + TALENT_Y_SIZE, TALENT_X_START:TALENT_X_START + TALENT_X_SIZE]
+
+    # OCR the talent round
+    talent = pytesseract.image_to_string(talent_crop, config=PROJ_TALENT_CONFIG)
+
+    # Remove all whitespaces and newlines, then get value from lookup table
+    talent = talent.replace(' ', '').replace('\n', '')
+    return PROJ_TALENT_LOOKUP[talent]
+
+
 def extract_player_combine_stats(image):
     # Get areas of the image which contain the combine stats
     dash_crop = image[COMB_DASH_START:COMB_DASH_START + COMB_Y_SIZE, COMB_X_START:COMB_X_START + COMB_DASH_SIZE]
@@ -435,6 +452,7 @@ def main():
     extract_player_archetype(thresh)
     extract_player_skills(thresh)
     extract_player_combine_stats(thresh)
+    extract_player_talent_round(thresh)
 
 
 if __name__ == '__main__':
