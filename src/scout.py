@@ -31,12 +31,44 @@ AGE_Y_START = 465
 AGE_X_SIZE = 35
 AGE_Y_SIZE = 35
 
+PROJ_X_START = 1410
+PROJ_Y_START = 170
+PROJ_X_SIZE = 200
+PROJ_Y_SIZE = 80
+
 # Tesseract configs
 POSITION_CONFIG = r'--oem 3 --psm 8 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ'  # PSM 8: Single word, only letters
 NAME_CONFIG = r'--oem 3 --psm 4'  # PSM 4: Single column of text of variable sizes
 HEIGHT_CONFIG = r"--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789\'\""  # PSM 7: Single line, only numbers and '"
 WEIGHT_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789'  # PSM 7: Single line, only numbers
 AGE_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789'  # PSM 7: Single line, only numbers
+PROJ_CONFIG = r'--oem 3 --psm 4 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 '  # PSM 5: Single uniform block of vertically aligned text, only letters, numbers and space
+
+# Lookup dictionaries
+PROJ_LOOKUP = {
+    "EARLY1STROUNDER": "1E",
+    "MID1STROUNDER": "1M",
+    "LATE1STROUNDER": "1L",
+    "EARLY2NDROUNDER": "2E",
+    "MID2NDROUNDER": "2M",
+    "LATE2NDROUNDER": "2L",
+    "EARLY3RDROUNDER": "3E",
+    "MID3RDROUNDER": "3M",
+    "LATE3RDROUNDER": "3L",
+    "EARLY4THROUNDER": "4E",
+    "MID4THROUNDER": "4M",
+    "LATE4THROUNDER": "4L",
+    "EARLY5THROUNDER": "5E",
+    "MID5THROUNDER": "5M",
+    "LATE5THROUNDER": "5L",
+    "EARLY6THROUNDER": "6E",
+    "MID6THROUNDER": "6M",
+    "LATE6THROUNDER": "6L",
+    "EARLY7THROUNDER": "7E",
+    "MID7THROUNDER": "7M",
+    "LATE7THROUNDER": "7L",
+    "UNDRAFTED": "UD",
+}
 
 
 def get_grayscale(image):
@@ -160,6 +192,18 @@ def extract_player_age(image):
     return age.strip()
 
 
+def extract_player_proj_round(image):
+    # Get area of picture which contains the age
+    proj_crop = image[PROJ_Y_START:PROJ_Y_START + PROJ_Y_SIZE, PROJ_X_START:PROJ_X_START + PROJ_X_SIZE]
+
+    # OCR the age
+    proj = pytesseract.image_to_string(proj_crop, config=PROJ_CONFIG)
+
+    # Remove all whitespaces and newlines, then get value from lookup table
+    proj = proj.replace(' ', '').replace('\n', '')
+    return PROJ_LOOKUP[proj]
+
+
 def main():
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
     image = cv2.imread('test.png')
@@ -174,6 +218,7 @@ def main():
     extract_player_height(thresh)
     extract_player_weight(thresh)
     extract_player_age(thresh)
+    extract_player_proj_round(thresh)
 
 
 if __name__ == '__main__':
