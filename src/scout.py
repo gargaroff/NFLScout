@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import re
 
 import cv2
 import matplotlib.pyplot as plt
@@ -36,6 +37,11 @@ PROJ_Y_START = 170
 PROJ_X_SIZE = 200
 PROJ_Y_SIZE = 80
 
+ARCH_X_START = 895
+ARCH_Y_START = 545
+ARCH_X_SIZE = 200
+ARCH_Y_SIZE = 40
+
 # Tesseract configs
 POSITION_CONFIG = r'--oem 3 --psm 8 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ'  # PSM 8: Single word, only letters
 NAME_CONFIG = r'--oem 3 --psm 4'  # PSM 4: Single column of text of variable sizes
@@ -43,6 +49,7 @@ HEIGHT_CONFIG = r"--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789\'\""  # 
 WEIGHT_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789'  # PSM 7: Single line, only numbers
 AGE_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789'  # PSM 7: Single line, only numbers
 PROJ_CONFIG = r'--oem 3 --psm 4 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 '  # PSM 5: Single uniform block of vertically aligned text, only letters, numbers and space
+ARCH_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz '  # PSM 7: Single line, only numbers, only letters and space
 
 # Lookup dictionaries
 PROJ_LOOKUP = {
@@ -69,6 +76,15 @@ PROJ_LOOKUP = {
     "LATE7THROUNDER": "7L",
     "UNDRAFTED": "UD",
 }
+
+ARCH_LOOKUP = {
+    "Man To Man": "Man-to-Man",
+    "Physical": "Red Zone Threat",
+    "Route Runner": "Possession",
+}
+
+# RegEx patterns for matching OCR'd text
+ARCH_PATTERN = r'^(Physical|Man To Man|Field General|Scrambler|Strong Arm|West Coast|Agile|Pass Protector|Power|Run Stopper|Speed Rusher|Pass Coverage|Accurate|Elusive|Receiving|Slot|Zone|Blocking|Utility|Hybrid|Run Support|Deep Threat|Route Runner)'
 
 
 def get_grayscale(image):
@@ -204,6 +220,20 @@ def extract_player_proj_round(image):
     return PROJ_LOOKUP[proj]
 
 
+def extract_player_archetype(image):
+    # Get area of picture which contains the archetype
+    arch_crop = image[ARCH_Y_START:ARCH_Y_START + ARCH_Y_SIZE, ARCH_X_START:ARCH_X_START + ARCH_X_SIZE]
+
+    # OCR the archetype
+    arch = pytesseract.image_to_string(arch_crop, config=ARCH_CONFIG)
+
+    # Remove all whitespaces and newlines, then get value from lookup table
+    arch = arch.strip()
+    result = re.match(ARCH_PATTERN, arch)
+    arch = result.group(1)
+    return ARCH_LOOKUP.get(arch, arch)
+
+
 def main():
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
     image = cv2.imread('test.png')
@@ -219,6 +249,7 @@ def main():
     extract_player_weight(thresh)
     extract_player_age(thresh)
     extract_player_proj_round(thresh)
+    extract_player_archetype(thresh)
 
 
 if __name__ == '__main__':
