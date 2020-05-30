@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
+import csv
+import ctypes
 import re
+import time
 
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import pytesseract
+import win32gui
+from PIL import ImageGrab
 
 # Coordinates where certain areas are located in the picture
 POSITION_X_START = 530
@@ -195,8 +200,74 @@ SKILL_LOOKUP = {
 
 # RegEx patterns for matching OCR'd text
 ARCH_PATTERN = r'^(Physical|Man To Man|Field General|Scrambler|Strong Arm|West Coast|Agile|Pass Protector|Power|Run Stopper|Speed Rusher|Pass Coverage|Accurate|Elusive|Receiving|Slot|Zone|Blocking|Utility|Hybrid|Run Support|Deep Threat|Route Runner)'
+PROJ_TALENT_PATTERN = r'^(EARLY|MID|LATE)([1-7])'
+
+# C struct redefinitions needed to send keys
+PUL = ctypes.POINTER(ctypes.c_ulong)
+
+BACKSPACE = 0x0E
+DOWN_ARROW = 0x50
+SPACE = 0x39
 
 
+class KeyBdInput(ctypes.Structure):
+    _fields_ = [("wVk", ctypes.c_ushort),
+                ("wScan", ctypes.c_ushort),
+                ("dwFlags", ctypes.c_ulong),
+                ("time", ctypes.c_ulong),
+                ("dwExtraInfo", PUL)]
+
+
+class HardwareInput(ctypes.Structure):
+    _fields_ = [("uMsg", ctypes.c_ulong),
+                ("wParamL", ctypes.c_short),
+                ("wParamH", ctypes.c_ushort)]
+
+
+class MouseInput(ctypes.Structure):
+    _fields_ = [("dx", ctypes.c_long),
+                ("dy", ctypes.c_long),
+                ("mouseData", ctypes.c_ulong),
+                ("dwFlags", ctypes.c_ulong),
+                ("time", ctypes.c_ulong),
+                ("dwExtraInfo", PUL)]
+
+
+class InputI(ctypes.Union):
+    _fields_ = [("ki", KeyBdInput),
+                ("mi", MouseInput),
+                ("hi", HardwareInput)]
+
+
+class Input(ctypes.Structure):
+    _fields_ = [("type", ctypes.c_ulong),
+                ("ii", InputI)]
+
+
+# Actual functions to send keys
+def key_down(hex_key_code):
+    extra = ctypes.c_ulong(0)
+    ii_ = InputI()
+    ii_.ki = KeyBdInput(0, hex_key_code, 0x0008, 0, ctypes.pointer(extra))
+    x = Input(ctypes.c_ulong(1), ii_)
+    ctypes.windll.user32.SendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
+
+
+def key_up(hex_key_code):
+    extra = ctypes.c_ulong(0)
+    ii_ = InputI()
+    ii_.ki = KeyBdInput(0, hex_key_code, 0x0008 | 0x0002, 0, ctypes.pointer(extra))
+    x = Input(ctypes.c_ulong(1), ii_)
+    ctypes.windll.user32.SendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
+
+
+def press(hex_key_code):
+    key_down(hex_key_code)
+    time.sleep(.05)
+    key_up(hex_key_code)
+
+
+# Functions to process image
 def get_grayscale(image):
     return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
@@ -276,6 +347,32 @@ def show_images(images, cols=1, titles=None):
     plt.show()
 
 
+# Helper
+def cleanup_proj_talent(proj_talent):
+    if proj_talent == 'UNDRAFTED':
+        return proj_talent
+
+    # Sometimes OCR gets 1ST wrong as 18T, etc.
+    result = re.match(PROJ_TALENT_PATTERN, proj_talent)
+    rnd = result.group(2)
+
+    # Determine the suffix. 1 uses ST, 2 ND, 3 RD, 4+ TH
+    if rnd == '1':
+        suffix = 'ST'
+    elif rnd == '2':
+        suffix = 'ND'
+    elif rnd == '3':
+        suffix = 'RD'
+    else:
+        suffix = 'TH'
+
+    # Use the correct suffix
+    prefix_length = len(result.group(1))
+    fixed_proj_talent = '{}{}{}{}'.format(result.group(1), result.group(2), suffix, proj_talent[prefix_length+3:])
+    return fixed_proj_talent
+
+
+# Functions to extract data from image
 def extract_player_name(image):
     # Get area of picture which contains the player name
     name_crop = image[NAME_Y_START:NAME_Y_START + NAME_Y_SIZE, NAME_X_START:NAME_X_START + NAME_X_SIZE]
@@ -330,8 +427,13 @@ def extract_player_proj_round(image):
     # OCR the age
     proj = pytesseract.image_to_string(proj_crop, config=PROJ_TALENT_CONFIG)
 
-    # Remove all whitespaces and newlines, then get value from lookup table
+    # Remove all whitespaces and newlines
     proj = proj.replace(' ', '').replace('\n', '')
+
+    # Cleanup OCR
+    proj = cleanup_proj_talent(proj)
+
+    # get value from lookup table
     return PROJ_TALENT_LOOKUP[proj]
 
 
@@ -398,8 +500,13 @@ def extract_player_talent_round(image):
     # OCR the talent round
     talent = pytesseract.image_to_string(talent_crop, config=PROJ_TALENT_CONFIG)
 
-    # Remove all whitespaces and newlines, then get value from lookup table
+    # Remove all whitespaces and newlines
     talent = talent.replace(' ', '').replace('\n', '')
+
+    # Cleanup OCR
+    talent = cleanup_proj_talent(talent)
+
+    # get value from lookup table
     return PROJ_TALENT_LOOKUP.get(talent, '')
 
 
@@ -408,7 +515,8 @@ def extract_player_combine_stats(image):
     dash_crop = image[COMB_DASH_START:COMB_DASH_START + COMB_Y_SIZE, COMB_X_START:COMB_X_START + COMB_DASH_SIZE]
     vertical_crop = image[COMB_VERT_START:COMB_VERT_START + COMB_Y_SIZE, COMB_X_START:COMB_X_START + COMB_VERT_SIZE]
     cone_crop = image[COMB_CONE_START:COMB_CONE_START + COMB_Y_SIZE, COMB_X_START:COMB_X_START + COMB_CONE_SIZE]
-    shuttle_crop = image[COMB_SHUTTLE_START:COMB_SHUTTLE_START + COMB_Y_SIZE, COMB_X_START:COMB_X_START + COMB_SHUTTLE_SIZE]
+    shuttle_crop = image[COMB_SHUTTLE_START:COMB_SHUTTLE_START + COMB_Y_SIZE,
+                   COMB_X_START:COMB_X_START + COMB_SHUTTLE_SIZE]
     bench_crop = image[COMB_BENCH_START:COMB_BENCH_START + COMB_Y_SIZE, COMB_X_START:COMB_X_START + COMB_BENCH_SIZE]
 
     # OCR the stats
@@ -439,25 +547,83 @@ def extract_player_combine_stats(image):
     return dash, vertical, cone, shuttle, bench
 
 
+def get_madden_window_box():
+    # Search for the Madden 20 window
+    toplist, winlist = [], []
+
+    def enum_cb(hwnd, _):
+        winlist.append((hwnd, win32gui.GetWindowText(hwnd)))
+
+    win32gui.EnumWindows(enum_cb, toplist)
+    madden = [(hwnd, title) for hwnd, title in winlist if 'madden' in title.lower()]
+    # Just grab the first hwnd for the first window matching madden
+    madden = madden[0]
+    hwnd = madden[0]
+
+    # Make madden the foreground window
+    win32gui.SetForegroundWindow(hwnd)
+    bbox = win32gui.GetWindowRect(hwnd)
+    return hwnd, bbox
+
+
 def main():
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-    image = cv2.imread('test.png')
+    hwnd, bbox = get_madden_window_box()
 
-    # Preprocess the image
-    dskw = deskew(image)
-    gray = get_grayscale(dskw)
-    thresh = thresholding(gray)
+    # List of all players
+    players = []
 
-    position = extract_player_position(thresh)
-    name = extract_player_name(thresh)
-    height = extract_player_height(thresh)
-    weight = extract_player_weight(thresh)
-    age = extract_player_age(thresh)
-    proj = extract_player_proj_round(thresh)
-    arch = extract_player_archetype(thresh)
-    skills = extract_player_skills(thresh)
-    combine = extract_player_combine_stats(thresh)
-    talent = extract_player_talent_round(thresh)
+    # There are 450 players to scout. Repeat the following process for each of them
+    for i in range(450):
+        # Always make sure that Madden is in the foreground (stupid Origin...)
+        win32gui.SetForegroundWindow(hwnd)
+
+        # Open the player card by pressing space
+        press(SPACE)
+
+        # Wait 1 second until the screen opens
+        time.sleep(1)
+
+        # Take a screenshot
+        image = ImageGrab.grab(bbox)
+
+        # Press backspace to go back to the scouting board
+        press(BACKSPACE)
+
+        # Transform RGB image to OpenCV compatible BGR image
+        image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+
+        # Preprocess the image
+        dskw = deskew(image)
+        gray = get_grayscale(dskw)
+        thresh = thresholding(gray)
+
+        # Perform OCR
+        position = extract_player_position(thresh)
+        name = extract_player_name(thresh)
+        height = extract_player_height(thresh)
+        weight = extract_player_weight(thresh)
+        age = extract_player_age(thresh)
+        proj = extract_player_proj_round(thresh)
+        arch = extract_player_archetype(thresh)
+        skills = extract_player_skills(thresh)
+        combine = extract_player_combine_stats(thresh)
+        talent = extract_player_talent_round(thresh)
+
+        # Save player
+        players.append((position, name, height, weight, age, proj, arch, skills, combine, talent))
+
+        # Go to the next player by pressing down
+        # Always make sure that Madden is in the foreground (stupid Origin...)
+        win32gui.SetForegroundWindow(hwnd)
+        press(DOWN_ARROW)
+        time.sleep(0.05)
+
+    # Save all players in CSV
+    with open('test.csv', 'w') as f:
+        csv_out = csv.writer(f, quoting=csv.QUOTE_ALL)
+        for player in players:
+            csv_out.writerow(player)
 
 
 if __name__ == '__main__':
