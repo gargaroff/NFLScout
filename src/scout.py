@@ -14,12 +14,12 @@ from PIL import ImageGrab
 # Coordinates where certain areas are located in the picture
 POSITION_X_START = 530
 POSITION_Y_START = 110
-POSITION_X_SIZE = 110
+POSITION_X_SIZE = 80
 POSITION_Y_SIZE = 35
 
 NAME_X_START = 535
 NAME_Y_START = 145
-NAME_X_SIZE = 620
+NAME_X_SIZE = 430
 NAME_Y_SIZE = 137
 
 HEIGHT_X_START = 900
@@ -61,17 +61,17 @@ GRADE_Y_START = 765
 GRADE_X_SIZE = 85
 GRADE_Y_SIZE = 65
 
-COMB_X_START = 1400
+COMB_X_START = 1405
 COMB_DASH_START = 380
-COMB_VERT_START = 420
+COMB_VERT_START = 425
 COMB_CONE_START = 510
 COMB_SHUTTLE_START = 550
 COMB_BENCH_START = 595
-COMB_DASH_SIZE = 60
+COMB_DASH_SIZE = 50
 COMB_VERT_SIZE = 70
-COMB_CONE_SIZE = 60
-COMB_SHUTTLE_SIZE = 60
-COMB_BENCH_SIZE = 40
+COMB_CONE_SIZE = 50
+COMB_SHUTTLE_SIZE = 50
+COMB_BENCH_SIZE = 30
 COMB_Y_SIZE = 30
 
 TALENT_X_START = 1435
@@ -80,12 +80,12 @@ TALENT_X_SIZE = 150
 TALENT_Y_SIZE = 60
 
 # Tesseract configs
-POSITION_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ'  # PSM 8: Single word, only letters
+POSITION_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=FCBDQHPWMRKLGESTO'  # PSM 8: Single word, only letters
 NAME_CONFIG = r'--oem 3 --psm 4 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ\''  # PSM 4: Single column of text of variable sizes
 HEIGHT_CONFIG = r"--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789\'\""  # PSM 7: Single line, only numbers and '"
 WEIGHT_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789'  # PSM 7: Single line, only numbers
 AGE_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789'  # PSM 7: Single line, only numbers
-PROJ_TALENT_CONFIG = r'--oem 3 --psm 4 -c tessedit_char_whitelist="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "'  # PSM 5: Single uniform block of vertically aligned text, only letters, numbers and space
+PROJ_TALENT_CONFIG = r'--oem 3 --psm 6 -c tessedit_char_whitelist="1234567ADEFHILMNORSTUY "'  # PSM 5: Single uniform block of vertically aligned text, only letters, numbers and space
 ARCH_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz "'  # PSM 7: Single line, only numbers, only letters and space
 SKILL_CONFIG = r'--oem 3 --psm 4 -c tessedit_char_whitelist="ABCDEFGHIJKLMNOPQRSTUVWXYZ. "'  # PSM 4: Single column of text of variable sizes, only letters and space
 GRADE_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=ABCDEF+-'  # PSM 7: Single line, only letters A-F, +, -
@@ -135,7 +135,7 @@ SKILL_LOOKUP = {
 
     # Mental
     "AWARENESS":          "AWR",
-    "PLAYRECOGNITION":    "PRC",
+    "P.RECOGNITION":      "PRC",
 
     # Kicking
     "KICKACCURARY":       "KAC",
@@ -198,8 +198,12 @@ SKILL_LOOKUP = {
     "TOUGHNESS":          "TGH",
 }
 
+POSITION_LOOKUP = {
+    'OB': 'QB',
+}
+
 # RegEx patterns for matching OCR'd text
-ARCH_PATTERN = r'^(Physical|Man To Man|Field General|Scrambler|Strong Arm|West Coast|Agile|Pass Protector|Power|Run Stopper|Speed Rusher|Pass Coverage|Accurate|Elusive|Receiving|Slot|Zone|Blocking|Utility|Hybrid|Run Support|Deep Threat|Route Runner)'
+ARCH_PATTERN = r'^(Physical|Man To Man|Field General|Scrambler|Strong Arm|West Coast|Agile|Pass Protector|Power|Run Stopper|Speed Rusher|Pass Coverage|Accurate|Elusive|Receiving|Slot|Zone|Blocking|Utility|Hybrid|Run Support|Deep Threat|Route Runner|Possession|Vertical Threat|Improviser)'
 PROJ_TALENT_PATTERN = r'^(EARLY|MID|LATE)([1-7])'
 
 # C struct redefinitions needed to send keys
@@ -278,7 +282,8 @@ def remove_noise(image):
 
 def thresholding(image):
     # Threshold the image, setting all foreground pixels to 255 and all background pixels to 0
-    return cv2.threshold(image, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+    return cv2.threshold(image, 0, 255, cv2.THRESH_BINARY_INV * cv2.THRESH_OTSU)[1]
+    # return cv2.threshold(image, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 
 
 def invert(image):
@@ -287,12 +292,12 @@ def invert(image):
 
 
 def dilate(image):
-    kernel = np.ones((5, 5), np.uint8)
+    kernel = np.ones((2, 2), np.uint8)
     return cv2.dilate(image, kernel, iterations=1)
 
 
 def erode(image):
-    kernel = np.ones((5, 5), np.uint8)
+    kernel = np.ones((2, 2), np.uint8)
     return cv2.erode(image, kernel, iterations=1)
 
 
@@ -377,6 +382,9 @@ def extract_player_name(image):
     # Get area of picture which contains the player name
     name_crop = image[NAME_Y_START:NAME_Y_START + NAME_Y_SIZE, NAME_X_START:NAME_X_START + NAME_X_SIZE]
 
+    # Invert the image to have black letters on white background
+    name_crop = invert(name_crop)
+
     # OCR the player name. Will contain \n so replace it with space
     player_name = pytesseract.image_to_string(name_crop, config=NAME_CONFIG)
     player_name = player_name.replace('\n', ' ')
@@ -388,9 +396,16 @@ def extract_player_position(image):
     pos_crop = image[POSITION_Y_START:POSITION_Y_START + POSITION_Y_SIZE,
                POSITION_X_START:POSITION_X_START + POSITION_X_SIZE]
 
+    # Invert the image to have black letters on white background
+    pos_crop = invert(pos_crop)
+
     # OCR the position
     position = pytesseract.image_to_string(pos_crop, config=POSITION_CONFIG)
-    return position.strip()
+
+    # Lookup some common OCR errors
+    position = position.strip()
+    position = POSITION_LOOKUP.get(position, position)
+    return position
 
 
 def extract_player_height(image):
@@ -399,7 +414,11 @@ def extract_player_height(image):
 
     # OCR the height
     height = pytesseract.image_to_string(height_crop, config=HEIGHT_CONFIG)
-    return height.replace('"', '').strip()
+    height = height.replace('"', '').strip()
+
+    # Height requires a ' as the 2nd character. Make sure it's there
+    height = "{}'{}".format(height[0], height[1:]) if height[1] != "'" else height
+    return height
 
 
 def extract_player_weight(image):
@@ -429,6 +448,10 @@ def extract_player_proj_round(image):
 
     # Remove all whitespaces and newlines
     proj = proj.replace(' ', '').replace('\n', '')
+
+    # For some reason 'MID 3RD ROUNDER' is not OCR'd
+    if proj == '':
+        proj = 'MID3RDROUNDER'
 
     # Cleanup OCR
     proj = cleanup_proj_talent(proj)
@@ -503,6 +526,10 @@ def extract_player_talent_round(image):
     # Remove all whitespaces and newlines
     talent = talent.replace(' ', '').replace('\n', '')
 
+    # Early return if not fully scouted yet
+    if talent == '':
+        return ''
+
     # Cleanup OCR
     talent = cleanup_proj_talent(talent)
 
@@ -511,13 +538,16 @@ def extract_player_talent_round(image):
 
 
 def extract_player_combine_stats(image):
+    # Combine stats are pretty small. Erode them to make the lines thicker
+    eroded = erode(image)
+
     # Get areas of the image which contain the combine stats
-    dash_crop = image[COMB_DASH_START:COMB_DASH_START + COMB_Y_SIZE, COMB_X_START:COMB_X_START + COMB_DASH_SIZE]
-    vertical_crop = image[COMB_VERT_START:COMB_VERT_START + COMB_Y_SIZE, COMB_X_START:COMB_X_START + COMB_VERT_SIZE]
-    cone_crop = image[COMB_CONE_START:COMB_CONE_START + COMB_Y_SIZE, COMB_X_START:COMB_X_START + COMB_CONE_SIZE]
-    shuttle_crop = image[COMB_SHUTTLE_START:COMB_SHUTTLE_START + COMB_Y_SIZE,
+    dash_crop = eroded[COMB_DASH_START:COMB_DASH_START + COMB_Y_SIZE, COMB_X_START:COMB_X_START + COMB_DASH_SIZE]
+    vertical_crop = eroded[COMB_VERT_START:COMB_VERT_START + COMB_Y_SIZE, COMB_X_START:COMB_X_START + COMB_VERT_SIZE]
+    cone_crop = eroded[COMB_CONE_START:COMB_CONE_START + COMB_Y_SIZE, COMB_X_START:COMB_X_START + COMB_CONE_SIZE]
+    shuttle_crop = eroded[COMB_SHUTTLE_START:COMB_SHUTTLE_START + COMB_Y_SIZE,
                    COMB_X_START:COMB_X_START + COMB_SHUTTLE_SIZE]
-    bench_crop = image[COMB_BENCH_START:COMB_BENCH_START + COMB_Y_SIZE, COMB_X_START:COMB_X_START + COMB_BENCH_SIZE]
+    bench_crop = eroded[COMB_BENCH_START:COMB_BENCH_START + COMB_Y_SIZE, COMB_X_START:COMB_X_START + COMB_BENCH_SIZE]
 
     # OCR the stats
     dash = pytesseract.image_to_string(dash_crop, config=COMB_TIME_CONFIG)
@@ -538,11 +568,23 @@ def extract_player_combine_stats(image):
         assert dash == vertical and dash == cone and dash == shuttle and dash == bench
         return dash, vertical, cone, shuttle, bench
 
+    # Tesseract can't detect double 7s because they are too close to each other
+    dash = '{}77'.format(dash) if len(dash) == 1 else dash
+    cone = '{}77'.format(cone) if len(cone) == 1 else cone
+    shuttle = '{}77'.format(shuttle) if len(shuttle) == 1 else shuttle
+
     # Dash, cone and shuttle require a . as the 2nd character, vertical as the 3rd. Make sure it's there
     dash = dash[0] + '.' + dash[1:] if dash[1] != '.' else dash
     vertical = vertical[0:2] + '.' + vertical[2:] if vertical[2] != '.' else vertical
     cone = cone[0] + '.' + cone[1:] if cone[1] != '.' else cone
     shuttle = shuttle[0] + '.' + shuttle[1:] if shuttle[1] != '.' else shuttle
+
+    # Make sure the length for all stats is correct. If not, cut off the last character
+    dash = dash[0:-1] if len(dash) > 4 else dash
+    vertical = vertical[0:-1] if len(vertical) > 4 else vertical
+    cone = cone[0:-1] if len(cone) > 4 else cone
+    shuttle = shuttle[0:-1] if len(shuttle) > 4 else shuttle
+    bench = bench[0:-1] if len(bench) > 2 else bench
 
     return dash, vertical, cone, shuttle, bench
 
@@ -574,7 +616,8 @@ def main():
     players = []
 
     # There are 450 players to scout. Repeat the following process for each of them
-    for i in range(450):
+    error = None
+    for i in range(156):
         # Always make sure that Madden is in the foreground (stupid Origin...)
         win32gui.SetForegroundWindow(hwnd)
 
@@ -592,23 +635,31 @@ def main():
 
         # Transform RGB image to OpenCV compatible BGR image
         image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+        # image = cv2.imread('test6.png')
 
         # Preprocess the image
-        dskw = deskew(image)
-        gray = get_grayscale(dskw)
+        deskewed = deskew(image)
+        gray = get_grayscale(deskewed)
         thresh = thresholding(gray)
 
         # Perform OCR
-        position = extract_player_position(thresh)
-        name = extract_player_name(thresh)
-        height = extract_player_height(thresh)
-        weight = extract_player_weight(thresh)
-        age = extract_player_age(thresh)
-        proj = extract_player_proj_round(thresh)
-        arch = extract_player_archetype(thresh)
-        skills = extract_player_skills(thresh)
-        combine = extract_player_combine_stats(thresh)
-        talent = extract_player_talent_round(thresh)
+        processed = thresh
+        try:
+            position = extract_player_position(processed)
+            name = extract_player_name(processed)
+            height = extract_player_height(processed)
+            weight = extract_player_weight(processed)
+            age = extract_player_age(processed)
+            proj = extract_player_proj_round(processed)
+            arch = extract_player_archetype(processed)
+            skills = extract_player_skills(gray)
+            combine = extract_player_combine_stats(processed)
+            talent = extract_player_talent_round(processed)
+        except RuntimeError as e:
+            # Save what we have so far
+            error = i
+            print(e)
+            break
 
         # Save player
         players.append((position, name, height, weight, age, proj, arch, skills, combine, talent))
@@ -624,6 +675,9 @@ def main():
         csv_out = csv.writer(f, quoting=csv.QUOTE_ALL)
         for player in players:
             csv_out.writerow(player)
+
+    if error is not None:
+        print('ERROR at player #{}'.format(error+1))
 
 
 if __name__ == '__main__':
