@@ -203,7 +203,7 @@ POSITION_LOOKUP = {
 }
 
 # RegEx patterns for matching OCR'd text
-ARCH_PATTERN = r'^(Physical|Man To Man|Field General|Scrambler|Strong Arm|West Coast|Agile|Pass Protector|Power|Run Stopper|Speed Rusher|Pass Coverage|Accurate|Elusive|Receiving|Slot|Zone|Blocking|Utility|Hybrid|Run Support|Deep Threat|Route Runner|Possession|Vertical Threat|Improviser)'
+ARCH_PATTERN = r'^(Physical|Man To Man|Field General|Scrambler|Strong Arm|West Coast|Agile|Pass Protector|Power Rusher|Power|Run Stopper|Speed Rusher|Pass Coverage|Accurate|Elusive|Receiving|Slot|Zone|Blocking|Utility|Hybrid|Run Support|Deep Threat|Route Runner|Possession|Vertical Threat|Improviser)'
 PROJ_TALENT_PATTERN = r'^(EARLY|MID|LATE)([1-7])'
 
 # C struct redefinitions needed to send keys
