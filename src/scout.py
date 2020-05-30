@@ -182,7 +182,7 @@ SKILL_LOOKUP = {
 
     # Defensive
     "BLOCKSHEDDING":      "BSH",
-    "FMOVES":             "FMV",
+    "F.MOVES":             "FMV",
     "M.COVERAGE":         "MCV",
     "PWRMOVES":           "PMV",
     "HITPOWER":           "POW",
