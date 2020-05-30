@@ -652,8 +652,8 @@ def main():
             age = extract_player_age(processed)
             proj = extract_player_proj_round(processed)
             arch = extract_player_archetype(processed)
-            skills = extract_player_skills(gray)
-            combine = extract_player_combine_stats(processed)
+            (skill1, grade1), (skill2, grade2), (skill3, grade3) = extract_player_skills(gray)
+            dash, vertical, cone, shuttle, bench = extract_player_combine_stats(processed)
             talent = extract_player_talent_round(processed)
         except RuntimeError as e:
             # Save what we have so far
@@ -662,7 +662,7 @@ def main():
             break
 
         # Save player
-        players.append((position, name, height, weight, age, proj, arch, skills, combine, talent))
+        players.append((position, name, proj, height, weight, age, '', arch, skill1, grade1, skill2, grade2, skill3, grade3, talent, dash, vertical, cone, shuttle, bench))
 
         # Go to the next player by pressing down
         # Always make sure that Madden is in the foreground (stupid Origin...)
