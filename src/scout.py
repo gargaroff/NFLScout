@@ -32,9 +32,9 @@ AGE_Y_START = 465
 AGE_X_SIZE = 35
 AGE_Y_SIZE = 35
 
-PROJ_X_START = 1410
+PROJ_X_START = 1400
 PROJ_Y_START = 170
-PROJ_X_SIZE = 200
+PROJ_X_SIZE = 210
 PROJ_Y_SIZE = 80
 
 ARCH_X_START = 895
@@ -57,16 +57,16 @@ GRADE_X_SIZE = 85
 GRADE_Y_SIZE = 65
 
 COMB_X_START = 1400
-COMB_DASH_START = 385
-COMB_VERT_START = 425
+COMB_DASH_START = 380
+COMB_VERT_START = 420
 COMB_CONE_START = 510
 COMB_SHUTTLE_START = 550
-COMB_BENCH_START = 590
-COMB_DASH_SIZE = 55
+COMB_BENCH_START = 595
+COMB_DASH_SIZE = 60
 COMB_VERT_SIZE = 70
-COMB_CONE_SIZE = 55
-COMB_SHUTTLE_SIZE = 55
-COMB_BENCH_SIZE = 35
+COMB_CONE_SIZE = 60
+COMB_SHUTTLE_SIZE = 60
+COMB_BENCH_SIZE = 40
 COMB_Y_SIZE = 30
 
 TALENT_X_START = 1435
@@ -75,8 +75,8 @@ TALENT_X_SIZE = 150
 TALENT_Y_SIZE = 60
 
 # Tesseract configs
-POSITION_CONFIG = r'--oem 3 --psm 8 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ'  # PSM 8: Single word, only letters
-NAME_CONFIG = r'--oem 3 --psm 4'  # PSM 4: Single column of text of variable sizes
+POSITION_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ'  # PSM 8: Single word, only letters
+NAME_CONFIG = r'--oem 3 --psm 4 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ\''  # PSM 4: Single column of text of variable sizes
 HEIGHT_CONFIG = r"--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789\'\""  # PSM 7: Single line, only numbers and '"
 WEIGHT_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789'  # PSM 7: Single line, only numbers
 AGE_CONFIG = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789'  # PSM 7: Single line, only numbers
@@ -379,16 +379,16 @@ def extract_player_skills(image):
     grade2 = grade2.strip()
     grade3 = grade3.strip()
 
-    # Lookup skills in dictionary
-    skill1 = SKILL_LOOKUP[skill1.strip()]
-    skill2 = SKILL_LOOKUP[skill2.strip()]
-    skill3 = SKILL_LOOKUP[skill3.strip()]
+    # Lookup skills in dictionary or assume unscouted
+    skill1 = SKILL_LOOKUP.get(skill1.strip(), '')
+    skill2 = SKILL_LOOKUP.get(skill2.strip(), '')
+    skill3 = SKILL_LOOKUP.get(skill3.strip(), '')
 
-    return {
-        skill1: grade1,
-        skill2: grade2,
-        skill3: grade3,
-    }
+    return (
+        (skill1, grade1 if skill1 != '' else ''),
+        (skill2, grade2 if skill2 != '' else ''),
+        (skill3, grade3 if skill3 != '' else ''),
+    )
 
 
 def extract_player_talent_round(image):
@@ -400,7 +400,7 @@ def extract_player_talent_round(image):
 
     # Remove all whitespaces and newlines, then get value from lookup table
     talent = talent.replace(' ', '').replace('\n', '')
-    return PROJ_TALENT_LOOKUP[talent]
+    return PROJ_TALENT_LOOKUP.get(talent, '')
 
 
 def extract_player_combine_stats(image):
@@ -448,16 +448,16 @@ def main():
     gray = get_grayscale(dskw)
     thresh = thresholding(gray)
 
-    extract_player_position(thresh)
-    extract_player_name(thresh)
-    extract_player_height(thresh)
-    extract_player_weight(thresh)
-    extract_player_age(thresh)
-    extract_player_proj_round(thresh)
-    extract_player_archetype(thresh)
-    extract_player_skills(thresh)
-    extract_player_combine_stats(thresh)
-    extract_player_talent_round(thresh)
+    position = extract_player_position(thresh)
+    name = extract_player_name(thresh)
+    height = extract_player_height(thresh)
+    weight = extract_player_weight(thresh)
+    age = extract_player_age(thresh)
+    proj = extract_player_proj_round(thresh)
+    arch = extract_player_archetype(thresh)
+    skills = extract_player_skills(thresh)
+    combine = extract_player_combine_stats(thresh)
+    talent = extract_player_talent_round(thresh)
 
 
 if __name__ == '__main__':
